@@ -1,0 +1,183 @@
+With fresh Install of Ubuntu 22.04.05 select third parties to install the latest nvidia driver and cuda
+Note that you can install more than one cuda on your machine and the aplication will choose the suitable one. 
+In this case it came with Nvidia driver 580.65.06 and CUDA 13
+
+Download CUDA 12.3 from the link below
+
+$  https://developer.nvidia.com/cuda-12-3-0-download-archive
+
+or use wget
+
+$  wget https://developer.download.nvidia.com/compute/cuda/12.3.0/local_installers/cuda_12.3.0_545.23.06_linux.run
+
+Silent install cuda
+
+$  sudo sh cuda_12.3.0_545.23.06_linux.run --toolkit --silent --override
+
+set the path accordingly
+
+$  nano ~/.bashrc
+
+Add the following lines at the end of the file:
+
+export PATH=/usr/local/cuda-12.3/bin${PATH:+:${PATH}}
+export LD_LIBRARY_PATH=/usr/local/cuda-12.3/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+
+Press ctrl+x, then Y, then enter
+
+Apply the cahnges by running:
+
+$ source ~/.bashrc
+
+You can verify the changes in a new terminal by running:
+
+$  nvcc --version
+
+download cuDNN 8.9.7. Be aware you need to have an nvidia account in order to be able to download cuDNN. Use the arcive section to access the tar file. Link below.
+
+$  https://developer.nvidia.com/rdp/cudnn-archive
+
+Download Local Installer for Linux x86_64(Tar)
+
+Run the codes from the folder you downloaded the file.
+
+$  tar -xvf cudnn-linux-x86_64-8.9.7.29_cuda12-archive.tar.xz
+$  sudo cp -P cudnn-linux-x86_64-8.9.7.29_cuda12-archive/lib/* /usr/local/cuda/lib64/
+$  sudo cp cudnn-linux-x86_64-8.9.7.29_cuda12-archive/include/* /usr/local/cuda/include/
+
+Use echo or nano to modify the bashrc. 
+
+$ echo 'export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"' >> ~/.bashrc
+$ echo 'export CUDA_HOME=/usr/local/cuda' >> ~/.bashrc
+$ echo 'export PATH="/usr/local/cuda/bin:$PATH"' >> ~/.bashrc
+
+Submit changes by running:
+
+$ source ~/.bashrc
+
+Install virtualenv
+
+$  https://virtualenv.pypa.io/en/latest/installation.html
+
+Create a virtualenv and activate it. 
+
+$  https://virtualenv.pypa.io/en/latest/user_guide.html
+
+Install tensorflow with GPU from the officail tensorflow site
+
+$  https://www.tensorflow.org/install/pip
+
+$  pip install tensorflow[and-cuda]     #run this to install tensorflow with gpu support
+
+Verify the installation.
+$  python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"
+
+It should recognize the GPU:
+[PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+
+Use this git repo for double check.
+$  sudo apt install git
+$  git clone https://github.com/gokul-a-krishnan/python-gpu-check
+$  cd python-gpu-check/tensorflow
+$  python3 check.py
+
+Install Jupyter Notebook.
+$  pip3 install notebook
+
+Or install jupyter lab.
+$  pip3 install jupyterlab  
+
+If there are missing depencies install them. For example: 
+$  sudo apt install python3-pip
+
+Start the Notebook.
+$  jupyter notebook
+
+Or jupyter lab
+$    jupyter lab
+
+Run the code.
+$  import tensorflow as tf
+$  print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+
+At the end it shoud say:
+Num GPUs Available:  1
+
+In my case it's 1 as I've got only one GPU
+
+Run another test if you feel like it.
+
+import tensorflow as tf
+from tensorflow.keras import datasets, layers, models
+
+# Check TensorFlow version
+print(f"TensorFlow version: {tf.__version__}")
+
+# Print CUDA and cuDNN versions
+print(
+    "Num GPUs Available: ",
+    len(tf.config.experimental.list_physical_devices("GPU")),
+)
+print("CUDA Version: ", tf.test.is_built_with_cuda())
+print("GPU Device Name: ", tf.test.gpu_device_name())
+
+# Enable mixed precision training
+# This can speed up training on newer GPUs
+policy = tf.keras.mixed_precision.Policy("mixed_float16")
+tf.keras.mixed_precision.set_global_policy(policy)
+
+# Load and preprocess the MNIST dataset
+mnist = datasets.mnist
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+x_train, x_test = (
+    x_train.astype("float32") / 255.0,
+    x_test.astype("float32") / 255.0,
+)
+
+# Reshape the data to add the channel dimension
+x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
+x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
+
+# Create the model
+model = models.Sequential(
+    [
+        layers.Conv2D(32, (3, 3), activation="relu", input_shape=(28, 28, 1)),
+        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(64, (3, 3), activation="relu"),
+        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(64, (3, 3), activation="relu"),
+        layers.Flatten(),
+        layers.Dense(64, activation="relu"),
+        layers.Dense(10, activation="softmax"),
+    ]
+)
+
+# Compile the model
+model.compile(
+    optimizer="adam",
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"],
+)
+
+# Train the model
+history = model.fit(
+    x_train, y_train, epochs=5, validation_split=0.2, batch_size=128
+)
+
+# Evaluate the model
+test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
+print(f"\nTest accuracy: {test_acc:.3f}")
+
+This should run on the GPU now
+TensorFlow version: 2.20.0
+Num GPUs Available:  1
+CUDA Version:  True
+GPU Device Name:  /device:GPU:0
+
+Pytorch:
+$  pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu130
+
+
+
+I hope this helps everyone! 
+Special thanks to the community as I just tried to sum it up from different sources to have this running on ubuntu 22.04!
