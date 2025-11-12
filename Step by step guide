@@ -82,10 +82,10 @@ $  cd python-gpu-check/tensorflow
 $  python3 check.py
 
 Install Jupyter Notebook.
-$  pip3 install notebook
+$  pip install notebook
 
 Or install jupyter lab.
-$  pip3 install jupyterlab  
+$  pip install jupyterlab  
 
 If there are missing depencies install them. For example: 
 $  sudo apt install python3-pip
@@ -175,7 +175,7 @@ CUDA Version:  True
 GPU Device Name:  /device:GPU:0
 
 Pytorch:
-$  pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu130
+$  pip install torch torchvision --index-url https://download.pytorch.org/whl/cu130
 
 
 
